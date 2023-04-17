@@ -1,11 +1,15 @@
 import React, {useState, useCallback} from 'react';
 import Image from 'next/image';
+import axios from 'axios';
 import Logo from '../../public/images/logo.png';
 import Input from '@/components/shared/input';
+import {signIn} from 'next-auth/react';
+import { useRouter } from 'next/router';
 
 type Props = {}
 
 const Auth = (props: Props) => {
+  const router = useRouter();
   const [email, setEmail] = useState<string>('');
   const [username, setUsername] = useState<string>('');
   const [password,setPassword] = useState<string>('');
@@ -16,7 +20,35 @@ const Auth = (props: Props) => {
   const toggleVariant = useCallback(() => {
     setVariant((currentVariant) => currentVariant === 'login' ? 'register' : 'login');
   }, []);
+
+  const login = useCallback(async () => {
+    try{
+      await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+        callbackUrl: '/'
+      });
+      router.push('/');
+    } catch(error){
+
+    }
+  }, [email, password, router]);
   
+  const registrer = useCallback(async () => {
+    try{
+      await axios.post('/api/register', {
+        email,
+        username,
+        password
+      });
+
+      login();
+    }catch(error){
+      console.log(error);
+    }
+  }, [email, username, password, login]);
+
   return (
     <div
       className='relative h-full w-full bg-[url("/images/hero.jpg")] bg-no-repeat bg-center bg-fixed bg-cover'
@@ -55,7 +87,10 @@ const Auth = (props: Props) => {
                 id='password'
               />
             </div>
-            <button className='bg-red-500 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition'>
+            <button 
+              className='bg-red-500 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition'
+              onClick={variant === 'login' ? login : registrer}
+            >
               {isLogin() ? 'Login' : 'Sing up'}
             </button>
             <p className='text-neutral-500 mt-12'>
